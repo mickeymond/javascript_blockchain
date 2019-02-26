@@ -1,0 +1,25 @@
+{
+  "name": "Blockchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "node_1": "nodemon dev/networkNode.js 3001",
+    "node_2": "nodemon dev/networkNode.js 3002",
+    "node_3": "nodemon dev/networkNode.js 3003",
+    "node_4": "nodemon dev/networkNode.js 3004",
+    "node_5": "nodemon dev/networkNode.js 3005",
+    "start": "concurrently \"npm run node_1\" \"npm run node_2\" \"npm run node_3\" \"npm run node_4\" \"npm run node_5\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "concurrently": "^4.1.0",
+    "express": "^4.16.4",
+    "hash.js": "^1.1.7",
+    "uuid": "^3.3.2"
+  }
+}

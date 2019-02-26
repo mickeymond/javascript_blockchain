@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Blockchain</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+</head>
+<body>
+    <div id="app" class="container text-center mt-5">
+        <h1>Blockchain @ {{ blockchain.currentNodeUrl }}</h1>
+        <a href="/block-explorer" class="btn btn-success">View Blockchain Explorer</a>
+        <hr>
+        <form v-on:submit="addNewNetWork">
+            <h5>Add A New Node To Network</h5>
+            <div class="input-group mb-3">
+                <input type="url" v-model="newNodeUrl" class="form-control" placeholder="URL of new node" required>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Add Node To Network</button>
+                </div>
+            </div>
+        </form>
+        <hr>
+        <form v-on:submit="addTransaction">
+            <h5>Add New Transaction</h5>
+            <div class="row">
+                <div class="col col-xs-12">
+                    <input type="text" v-model="sender" class="form-control" placeholder="Sender Address">
+                </div>
+                <div class="col col-xs-12">
+                    <input type="text" v-model="recipient" class="form-control" placeholder="Recipient Address">
+                </div>
+                <div class="col col-xs-12">
+                    <input type="text" v-model="amount" class="form-control" placeholder="Amount">
+                </div>
+                <button type="submit" class="btn btn-primary  col-xs-12">Add</button>
+            </div>
+        </form>
+        <hr>
+        <button v-on:click="mineBlockChain" class="btn btn-danger btn-large">Mine Blockchain</button>
+        <hr>
+        <button v-on:click="networkConsensus" class="btn btn-success btn-large">Network Consensus</button>
+        <hr>
+        <p>Blockchain Node Address: <strong>{{ blockchain.nodeAddress }}</strong></p>
+        <p>Blockchain Node URL: <strong>{{ blockchain.currentNodeUrl }}</strong></p>
+        <p>Total Number of Blocks: <strong>{{ blockchain.chain.length }}</strong></p>
+        <p>Pending Transactions: <strong>{{ blockchain.pendingTransactions.length }}</strong></p>
+        <p>Connected Nodes: <strong>{{ blockchain.networkNodes }}</strong></p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.6/dist/loadingoverlay.min.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                newNodeUrl: '',
+                sender: '',
+                recipient: '',
+                amount: '',
+                currentBlock: 1,
+                blockchain: {
+                    chain: [],
+                    pendingTransactions: []
+                },
+            },
+            mounted: function() {
+                fetchBlockchain();
+            },
+            methods: {
+                addNewNetWork: function(event) {
+                    event.preventDefault();
+                    $.LoadingOverlay('show');
+                    $.ajax({
+                        url: '/register-and-broadcast-node',
+                        method: 'POST',
+                        data: { newNodeUrl: this.newNodeUrl },
+                        success: function(response) {
+                            $.LoadingOverlay('hide');
+                            handleSuccess(response);
+                            fetchBlockchain();
+                        },
+                        error: function(xhr, ts, error) {
+                            $.LoadingOverlay('hide');
+                            handleError(error);
+                        }
+                    });
+                },
+                addTransaction: function(event) {
+                    event.preventDefault();
+                    $.LoadingOverlay('show');
+                    $.ajax({
+                        url: '/transaction/broadcast',
+                        method: 'POST',
+                        data: { sender: this.sender, recipient: this.recipient, amount: this.amount },
+                        success: function(response) {
+                            $.LoadingOverlay('hide');
+                            handleSuccess(response);
+                            fetchBlockchain();
+                        },
+                        error: function(xhr, ts, error) {
+                            $.LoadingOverlay('hide');
+                            handleError(error);
+                        }
+                    });
+                },
+                mineBlockChain: function(event) {
+                    event.preventDefault();
+                    $.LoadingOverlay('show');
+                    $.ajax({
+                        url: '/mine',
+                        success: function(response) {
+                            $.LoadingOverlay('hide');
+                            handleSuccess(response);
+                            fetchBlockchain();
+                        },
+                        error: function(xhr, ts, error) {
+                            $.LoadingOverlay('hide');
+                            handleError(error);
+                        }
+                    });
+                },
+                networkConsensus: function(event) {
+                    event.preventDefault();
+                    $.LoadingOverlay('show');
+                    $.ajax({
+                        url: '/consensus',
+                        success: function(response) {
+                            $.LoadingOverlay('hide');
+                            handleSuccess(response);
+                            fetchBlockchain();
+                        },
+                        error: function(xhr, ts, error) {
+                            $.LoadingOverlay('hide');
+                            handleError(error);
+                        }
+                    });
+                }
+            }
+        });
+
+        function handleSuccess(response) {
+            if(response.note) {
+                toastr.success(response.note);
+            } else if(response.info) {
+                toastr.info(response.info);
+            } else {
+                toastr.error(response.error);
+            }
+        }
+
+        function handleError(error) {
+            toastr.error(error);
+        }
+
+        function fetchBlockchain() {
+            $.ajax({
+                url: '/blockchain',
+                success: function(response) {
+                    console.log(response);
+                    app.blockchain = response;
+                },
+                error: function(xhr, ts, error) {
+                    handleError(error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
