@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const uuid = require('uuid/v1');
 const axios = require('axios');
 
@@ -10,8 +9,8 @@ const nodeAddress = uuid().split('-').join('');
 const app = express();
 const blockchain = new Blockchain(nodeAddress);
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', function(req, res) {
     res.sendFile('./blockchain-frontend/index.html', { root: __dirname });
